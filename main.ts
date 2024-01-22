@@ -7,15 +7,15 @@ export default class HtmlLocalSrcPlugin extends Plugin {
 			const activeFile = activeView?.file;
 			// console.log(element);
 			if (activeFile) {
-				console.log(activeFile.basename)
+				// console.log(activeFile.basename)
 
 				const targetLinks = Array.from(element.getElementsByTagName("img")).filter(
 					(link) => {
 						// console.log(link.src);
-						return link.src.lastIndexOf(':') == 3;
+						return link.src.lastIndexOf(':') === 3;
 					}
 				);
-				console.log(targetLinks);
+				// console.log(targetLinks);
 				// console.log(activeFile);
 
 				let activePath = this.app.vault.getResourcePath(activeFile);
