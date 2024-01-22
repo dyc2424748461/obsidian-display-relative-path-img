@@ -5,11 +5,18 @@ export default class HtmlLocalSrcPlugin extends Plugin {
 		this.registerMarkdownPostProcessor((element, ctx) => {
 			const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
 			const activeFile = activeView?.file;
-
+			// console.log(element);
 			if (activeFile) {
+				console.log(activeFile.basename)
+
 				const targetLinks = Array.from(element.getElementsByTagName("img")).filter(
-					(link) => link.src.includes(activeFile.basename)
+					(link) => {
+						// console.log(link.src);
+						return link.src.lastIndexOf(':') == 3;
+					}
 				);
+				console.log(targetLinks);
+				// console.log(activeFile);
 
 				let activePath = this.app.vault.getResourcePath(activeFile);
 				activePath = activePath ? activePath.substring(0, activePath.lastIndexOf("/")) : '';
