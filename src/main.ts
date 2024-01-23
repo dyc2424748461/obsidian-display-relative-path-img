@@ -2,6 +2,8 @@ import {Platform, Plugin, TFile, MarkdownView, editorLivePreviewField} from "obs
 
 export  default class HtmlLocalSrcPlugin extends Plugin {
 	private activeFile: TFile | null = null;
+	private enableLog = false;
+	private log = this.enableLog?console.log:()=>{};
 
 	onload() {
 		this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -17,18 +19,18 @@ export  default class HtmlLocalSrcPlugin extends Plugin {
 	processMarkdown(element: HTMLElement) {
 		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
 		const activeFile = activeView?.file;
-		// console.log(element);
+		// this.log(element);
 		if (activeFile) {
-			// console.log(activeFile.basename)
+			// this.log(activeFile.basename)
 
 			const targetLinks = Array.from(element.getElementsByTagName("img")).filter(
 				(link) => {
-					console.log('live', editorLivePreviewField, 'live');
-					return link.src.lastIndexOf(':') === 3;
+					this.log('live', editorLivePreviewField, 'live');
+					return link.src.lastIndexOf(':') === 3;//"app://...."
 				}
 			);
-			// console.log(targetLinks);
-			// console.log(activeFile);
+			// this.log(targetLinks);
+			// this.log(activeFile);
 
 			let activePath = this.app.vault.getResourcePath(activeFile);
 			activePath = activePath ? activePath.substring(0, activePath.lastIndexOf("/")) : '';
@@ -54,7 +56,7 @@ export  default class HtmlLocalSrcPlugin extends Plugin {
 
 		// 在 handleFileOpen 中调用 processMarkdown
 		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-		console.log('activeView  ',activeView);
+		this.log('activeView  ',activeView);
 		const element = activeView?.contentEl as HTMLElement;
 		const ctx = {sourcePath: file.path};
 		this.processMarkdown(element);
@@ -62,7 +64,7 @@ export  default class HtmlLocalSrcPlugin extends Plugin {
 
 	handleFileOpen = async (file: TFile) => {
 		// 当文件打开时，移除之前的 modify 事件监听器
-		console.log('in handleFileOpen');
+		this.log('in handleFileOpen');
 		this.useProcessMarkdown(file);
 		if (this.activeFile) {
 			this.app.vault.off("modify", this.handleFileModify);
@@ -76,16 +78,16 @@ export  default class HtmlLocalSrcPlugin extends Plugin {
 	};
 
 	handleFileModify = async (file: TFile) => {
-		console.log('in handleFileModify');
+		this.log('in handleFileModify');
 		if (this.activeFile && file.path === this.activeFile.path) {
-			console.log(`Active file modified: ${file.path}`);
+			this.log(`Active file modified: ${file.path}`);
 			this.useProcessMarkdown(file);
 		}
 	};
 
 	modifyHTML(el: HTMLElement, ctx: { sourcePath: string }) {
 		// Perform additional modifications to HTML if needed
-		console.log("Markdown rendering completed:", ctx.sourcePath);
+		this.log("Markdown rendering completed:", ctx.sourcePath);
 	}
 
 	/*
@@ -121,22 +123,22 @@ export  default class HtmlLocalSrcPlugin extends Plugin {
 // 计算元素的滚动行数，也就是滚动了多少行
 // 使用 const 声明常量，并添加类型注解
 		const scrollLines: number = Math.round(scrollTop / lineHeight);
-		console.log('scrollHeight ',scrollTop%clientHeight -clientHeight/4 <0)
+		this.log('scrollHeight ',scrollTop%clientHeight -clientHeight/4 <0)
 		if (scrollTop%clientHeight -clientHeight/4 <0){
-			console.log('in Scroll');
+			this.log('in Scroll');
 			this.useProcessMarkdown(this.activeFile as TFile)
 		}
 
 
 // 在控制台打印出滚动行数
-		console.log('You scrollTop ' + scrollTop+'  ,Height ='+clientHeight + ', clientHeight ' + clientHeight + ' lines.');
+		this.log('You scrollTop ' + scrollTop+'  ,Height ='+clientHeight + ', clientHeight ' + clientHeight + ' lines.');
 		return scrollLines;
 	};
 
 
 	scroll_toUpdateView(activeView:MarkdownView) {
 		let div = activeView?.containerEl.querySelector('.cm-scroller');
-		console.log(div)
+		this.log(div)
 		// @ts-ignore
 		div.getBoundingClientRect();
 // this.registerDomEvent()
@@ -145,7 +147,7 @@ export  default class HtmlLocalSrcPlugin extends Plugin {
 		this.registerDomEvent(div, 'scroll', (event) => {
 			this.scrollLines(div as HTMLElement);
 			// 在控制台打印出滚动的距离
-			console.log('Editor Scrolled:   pixels vertically and pixels horizontally.');
+			this.log('Editor Scrolled:   pixels vertically and pixels horizontally.');
 		});
 	}
 
@@ -155,21 +157,21 @@ export  default class HtmlLocalSrcPlugin extends Plugin {
 	processView() {
 		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
 		const file = activeView?.file;
-		console.log(activeView?.file);
+		this.log(activeView?.file);
 		if (file==null) return;
-		console.log('文件已打开', file.path);
+		this.log('文件已打开', file.path);
 		// const vault = JSON.parse(file.vault.);
 		const config = (file.vault as any).config;
 		let attr = config.livePreview;
 		const defaultView = config.defaultViewMode;
-		console.log(file);
+		this.log(file);
 		if (attr || defaultView === 'preview') {
 			// this.processMarkdown();
-			console.log(attr);
+			this.log(attr);
 			this.handleFileOpen(file);
 			this.scroll_toUpdateView(activeView as MarkdownView);
 
 		}
-		console.log('end');
+		this.log('end');
 	}
 }
