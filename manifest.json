@@ -1,10 +1,10 @@
 {
-	"id": "display-relative-img-plugin",
+	"id": "obsidian-display-relative-img-plugin",
 	"name": "display relative img plugin",
-	"version": "0.0.1",
+	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "Display the relative path image referenced by <img> in Obsidian without altering the original document",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
+	"author": "dyc",
+	"authorUrl": "https://github.com/dyc2424748461",
 	"isDesktopOnly": false
 }
