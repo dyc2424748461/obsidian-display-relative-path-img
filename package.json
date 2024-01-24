@@ -1,6 +1,6 @@
 {
 	"name": "display-relative-path-img",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "Display the relative path image referenced by <img> in Obsidian without altering the original document",
 	"main": "main.js",
 	"scripts": {
