@@ -1,9 +1,10 @@
 import {Platform, Plugin, TFile, MarkdownView, editorLivePreviewField} from "obsidian";
-
-export  default class HtmlLocalSrcPlugin extends Plugin {
-	private activeFile: TFile | null = null;
+// import "styles.css";
+export default class HtmlLocalSrcPlugin extends Plugin {
+	private activeFile: TFile;
 	private enableLog = false;
-	private log = this.enableLog?console.log:()=>{};
+	private log = this.enableLog ? console.log : () => {
+	};
 
 	onload() {
 		this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -37,17 +38,17 @@ export  default class HtmlLocalSrcPlugin extends Plugin {
 
 			for (const link of targetLinks) {
 				let cleanLink = link.src.replace('app://obsidian.md/', '');
-				// For iOS
-				cleanLink = cleanLink.replace('capacitor://localhost/', '');
+				// For iOS  targetLins only filter  "app:"
+				// cleanLink = cleanLink.replace('capacitor://localhost/', '');
 
 				let fullLink = activePath + '/' + cleanLink;
 				link.src = fullLink;
 
-				if (Platform.isMobile) {
-					// Modify styling for mobile platform
-					link.style.objectFit = "contain";
-					link.style.height = "100px";
-				}
+				// if (Platform.isMobile) {
+				// 	// Modify styling for mobile platform
+				// 	link.style.objectFit = "contain";
+				// 	link.style.height = "100px";
+				// }
 			}
 		}
 	}
@@ -55,8 +56,8 @@ export  default class HtmlLocalSrcPlugin extends Plugin {
 	useProcessMarkdown(file: TFile) {
 
 		// 在 handleFileOpen 中调用 processMarkdown
-		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-		this.log('activeView  ',activeView);
+		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView) as MarkdownView;
+		this.log('activeView  ', activeView);
 		const element = activeView?.contentEl as HTMLElement;
 		const ctx = {sourcePath: file.path};
 		this.processMarkdown(element);
@@ -109,7 +110,7 @@ export  default class HtmlLocalSrcPlugin extends Plugin {
 		const clientHeight: number = Math.round(element.clientHeight);
 		// const scrollHeight: number = element.scrollHeight;
 		const scrollTop: number = Math.round(element.scrollTop);
-		const scrollHeight:number = element.scrollHeight
+		const scrollHeight: number = element.scrollHeight
 		// element.
 
 // 计算元素的每一行的高度，假设每一行的高度是相同的
@@ -123,26 +124,25 @@ export  default class HtmlLocalSrcPlugin extends Plugin {
 // 计算元素的滚动行数，也就是滚动了多少行
 // 使用 const 声明常量，并添加类型注解
 		const scrollLines: number = Math.round(scrollTop / lineHeight);
-		this.log('scrollHeight ',scrollTop%clientHeight -clientHeight/4 <0)
-		if (scrollTop%clientHeight -clientHeight/4 <0){
+		this.log('scrollHeight ', scrollTop % clientHeight - clientHeight / 4 < 0)
+		if (scrollTop % clientHeight - clientHeight / 4 < 0) {
 			this.log('in Scroll');
-			this.useProcessMarkdown(this.activeFile as TFile)
+			this.useProcessMarkdown(this.activeFile)
 		}
 
 
 // 在控制台打印出滚动行数
-		this.log('You scrollTop ' + scrollTop+'  ,Height ='+clientHeight + ', clientHeight ' + clientHeight + ' lines.');
+		this.log('You scrollTop ' + scrollTop + '  ,Height =' + clientHeight + ', clientHeight ' + clientHeight + ' lines.');
 		return scrollLines;
 	};
 
 
-	scroll_toUpdateView(activeView:MarkdownView) {
+	scroll_toUpdateView(activeView: MarkdownView) {
 		let div = activeView?.containerEl.querySelector('.cm-scroller');
 		this.log(div)
 		// @ts-ignore
 		div.getBoundingClientRect();
 // this.registerDomEvent()
-
 		// @ts-ignore
 		this.registerDomEvent(div, 'scroll', (event) => {
 			this.scrollLines(div as HTMLElement);
@@ -155,21 +155,22 @@ export  default class HtmlLocalSrcPlugin extends Plugin {
 	主要函数
 	 */
 	processView() {
-		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView) as MarkdownView;
 		const file = activeView?.file;
 		this.log(activeView?.file);
-		if (file==null) return;
+		if (file == null) return;
 		this.log('文件已打开', file.path);
-		// const vault = JSON.parse(file.vault.);
-		const config = (file.vault as any).config;
-		let attr = config.livePreview;
-		const defaultView = config.defaultViewMode;
-		this.log(file);
-		if (attr || defaultView === 'preview') {
+		this.log('=========')
+		this.log(activeView.getState());
+		this.log(file.vault)
+		this.log('=========')
+		const currentState = activeView.getState();
+		const currentMode = currentState.mode;
+		const onlySource = currentState.source;
+		if (!(onlySource && currentMode === 'source')) {
 			// this.processMarkdown();
-			this.log(attr);
 			this.handleFileOpen(file);
-			this.scroll_toUpdateView(activeView as MarkdownView);
+			this.scroll_toUpdateView(activeView);
 
 		}
 		this.log('end');
