@@ -1,7 +1,7 @@
-import {Platform, Plugin, TFile, MarkdownView, editorLivePreviewField} from "obsidian";
-// import "styles.css";
+import {editorLivePreviewField, MarkdownView, Plugin,} from "obsidian";
+
 export default class HtmlLocalSrcPlugin extends Plugin {
-	private activeFile: TFile;
+	private activeView: MarkdownView;
 	private enableLog = false;
 	private log = this.enableLog ? console.log : () => {
 	};
@@ -10,13 +10,25 @@ export default class HtmlLocalSrcPlugin extends Plugin {
 		this.app.workspace.getActiveViewOfType(MarkdownView);
 		this.registerMarkdownPostProcessor((element, ctx) => {
 			this.processMarkdown(element);
-
 		});
 
 		this.registerMarkdownPostProcessor(this.modifyHTML.bind(this));
 		this.registerEvent(this.app.workspace.on("file-open", this.processView.bind(this)));
+		this.registerEvent(this.app.workspace.on("editor-change",this.useProcessMarkdown.bind(this)));
 	}
-
+	/*
+	主要函数
+	 */
+	processView() {
+		this.activeView = this.app.workspace.getActiveViewOfType(MarkdownView) as MarkdownView;
+		const file = this.activeView?.file;
+		if (file == null) return;
+		this.log('文件已打开', file.path);
+		this.useProcessMarkdown();
+		this.scroll_toUpdateView();
+		this.log(editorLivePreviewField)
+		this.log('end');
+	}
 	processMarkdown(element: HTMLElement) {
 		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
 		const activeFile = activeView?.file;
@@ -26,65 +38,30 @@ export default class HtmlLocalSrcPlugin extends Plugin {
 
 			const targetLinks = Array.from(element.getElementsByTagName("img")).filter(
 				(link) => {
-					this.log('live', editorLivePreviewField, 'live');
 					return link.src.lastIndexOf(':') === 3;//"app://...."
 				}
 			);
-			// this.log(targetLinks);
-			// this.log(activeFile);
 
 			let activePath = this.app.vault.getResourcePath(activeFile);
+			this.log(activeView?.getEphemeralState());
+			this.log(this.app.workspace);
+			this.log(activePath);
 			activePath = activePath ? activePath.substring(0, activePath.lastIndexOf("/")) : '';
 
 			for (const link of targetLinks) {
 				let cleanLink = link.src.replace('app://obsidian.md/', '');
-				// For iOS  targetLins only filter  "app:"
-				// cleanLink = cleanLink.replace('capacitor://localhost/', '');
+				link.src = activePath + '/' + cleanLink;
 
-				let fullLink = activePath + '/' + cleanLink;
-				link.src = fullLink;
-
-				// if (Platform.isMobile) {
-				// 	// Modify styling for mobile platform
-				// 	link.style.objectFit = "contain";
-				// 	link.style.height = "100px";
-				// }
 			}
 		}
 	}
 
-	useProcessMarkdown(file: TFile) {
-
-		// 在 handleFileOpen 中调用 processMarkdown
+	useProcessMarkdown() {
 		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView) as MarkdownView;
 		this.log('activeView  ', activeView);
 		const element = activeView?.contentEl as HTMLElement;
-		const ctx = {sourcePath: file.path};
 		this.processMarkdown(element);
 	}
-
-	handleFileOpen = async (file: TFile) => {
-		// 当文件打开时，移除之前的 modify 事件监听器
-		this.log('in handleFileOpen');
-		this.useProcessMarkdown(file);
-		if (this.activeFile) {
-			this.app.vault.off("modify", this.handleFileModify);
-		}
-
-		// 记录当前活动文件
-		this.activeFile = file;
-
-		// 添加当前活动文件的 modify 事件监听器
-		this.registerEvent(this.app.vault.on("modify", this.handleFileModify));
-	};
-
-	handleFileModify = async (file: TFile) => {
-		this.log('in handleFileModify');
-		if (this.activeFile && file.path === this.activeFile.path) {
-			this.log(`Active file modified: ${file.path}`);
-			this.useProcessMarkdown(file);
-		}
-	};
 
 	modifyHTML(el: HTMLElement, ctx: { sourcePath: string }) {
 		// Perform additional modifications to HTML if needed
@@ -92,14 +69,10 @@ export default class HtmlLocalSrcPlugin extends Plugin {
 	}
 
 	/*
-	scroll部分子函数
+	scroll 子函数
 	 */
 
 	scrollLines = async (element: HTMLElement): Promise<number> => {
-
-		// 获取一个元素，你可以根据你的需要选择合适的选择器
-// 使用 as 类型断言，告诉编译器 element 是一个 HTMLElement 类型的对象
-// 		let element = document.querySelector('.cm-scroller') as HTMLElement;
 
 // 获取元素的边界矩形
 		let rect = element.getBoundingClientRect();
@@ -110,7 +83,6 @@ export default class HtmlLocalSrcPlugin extends Plugin {
 		const clientHeight: number = Math.round(element.clientHeight);
 		// const scrollHeight: number = element.scrollHeight;
 		const scrollTop: number = Math.round(element.scrollTop);
-		const scrollHeight: number = element.scrollHeight
 		// element.
 
 // 计算元素的每一行的高度，假设每一行的高度是相同的
@@ -127,7 +99,7 @@ export default class HtmlLocalSrcPlugin extends Plugin {
 		this.log('scrollHeight ', scrollTop % clientHeight - clientHeight / 4 < 0)
 		if (scrollTop % clientHeight - clientHeight / 4 < 0) {
 			this.log('in Scroll');
-			this.useProcessMarkdown(this.activeFile)
+			this.useProcessMarkdown()
 		}
 
 
@@ -137,42 +109,19 @@ export default class HtmlLocalSrcPlugin extends Plugin {
 	};
 
 
-	scroll_toUpdateView(activeView: MarkdownView) {
-		let div = activeView?.containerEl.querySelector('.cm-scroller');
+	scroll_toUpdateView() {
+		let div = this.activeView?.containerEl.querySelector('.cm-scroller') as HTMLElement;
 		this.log(div)
 		// @ts-ignore
 		div.getBoundingClientRect();
 // this.registerDomEvent()
 		// @ts-ignore
 		this.registerDomEvent(div, 'scroll', (event) => {
-			this.scrollLines(div as HTMLElement);
+			this.scrollLines(div);
 			// 在控制台打印出滚动的距离
 			this.log('Editor Scrolled:   pixels vertically and pixels horizontally.');
 		});
 	}
 
-	/*
-	主要函数
-	 */
-	processView() {
-		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView) as MarkdownView;
-		const file = activeView?.file;
-		this.log(activeView?.file);
-		if (file == null) return;
-		this.log('文件已打开', file.path);
-		this.log('=========')
-		this.log(activeView.getState());
-		this.log(file.vault)
-		this.log('=========')
-		const currentState = activeView.getState();
-		const currentMode = currentState.mode;
-		const onlySource = currentState.source;
-		if (!(onlySource && currentMode === 'source')) {
-			// this.processMarkdown();
-			this.handleFileOpen(file);
-			this.scroll_toUpdateView(activeView);
 
-		}
-		this.log('end');
-	}
 }
