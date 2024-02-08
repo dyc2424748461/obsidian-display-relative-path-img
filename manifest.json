@@ -2,7 +2,7 @@
 	"id": "display-relative-path-img",
 	"name": "Display Relative Path Img",
 	"minAppVersion": "0.15.0",
-	"description": "Display the relative path image referenced by <img> in Obsidian without altering the original document",
+	"description": "Display the image of the <img> tag",
 	"author": "dyc",
 	"authorUrl": "https://github.com/dyc2424748461",
 	"isDesktopOnly": true,
